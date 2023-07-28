@@ -1,34 +1,15 @@
 import camelize from "camelize";
-import { dataImages, data } from "../data";
 
 export const RestaurantsRequest = (location = "6.465422,3.406448") => {
-  return new Promise((resolve, reject) => {
-    const mock = data[location];
-    if (!mock) {
-      reject("not found");
-    }
-    resolve(mock);
+  return fetch(
+    `https://80d6-2001-14ba-606f-e00-c3c-33f3-2b17-89c8.ngrok-free.app/projectvic-88bda/us-central1/restaurants?location=${location}`
+  ).then((res) => {
+    return res.json();
   });
 };
 
 export const RestaurantsTransform = ({ results = [] }) => {
-  let currentImageIndex = 0;
-
-  const addDataImage = (restaurant) => {
-    if (currentImageIndex < dataImages.length) {
-      const imageToAdd = dataImages[currentImageIndex];
-      restaurant.photos = [imageToAdd];
-      currentImageIndex++;
-    } else {
-      currentImageIndex = 0;
-      restaurant.photos = [];
-    }
-    return restaurant;
-  };
-
   const mappedResults = results.map((restaurant) => {
-    addDataImage(restaurant); // Pass the restaurant object to the addDataImage function.
-
     return {
       ...restaurant,
       address: restaurant.vicinity,
