@@ -1,49 +1,106 @@
-import React, { useState } from "react";
-import { ScrollView } from "react-native";
+import React, { useState, useContext } from "react";
+import { ScrollView, View, Image, TouchableOpacity } from "react-native";
 import { List, Divider } from "react-native-paper";
 import { TabLink } from "../stylings/restaurant-info.styles";
 import { Text } from "../styles/text.styles";
 import { RestaurantInfo } from "../features/restaurant-info";
-import { Spacer } from "../styles/spacer.styles";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { foodPhotos } from "../foodPhotos";
-import { Image } from "react-native";
-import { OrderButton } from "../stylings/restaurant-list.styles";
+import { CartContext } from "../context/cart.context";
+import { colors } from "../styles/colors.styles";
 
 export const NairaIcon = () => {
   return <Icon name="currency-ngn" color="white" size={18} />;
 };
 
-export const RestaurantDetailScreen = ({ route }) => {
+export const RestaurantDetailScreen = ({ navigation, route }) => {
   const [riceExpanded, setriceExpanded] = useState(false);
   const [swallowExpanded, setswallowExpanded] = useState(false);
-  const [proteinExpanded, setproteinExpanded] = useState(false);
-  const [sideExpanded, setSideExpanded] = useState(false);
-  const [drinksExpanded, setDrinksExpanded] = useState(false);
   const [specialExpanded, setSpecialExpanded] = useState(false);
 
   const { restaurant } = route.params;
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, cart, setSelectedTitle } = useContext(CartContext);
 
-  const CustomListItem = ({ title, imageSource, price }) => {
+  const isMealInCart = (title) => {
+    return cart.some((item) => item.item === title);
+  };
+
+  const CustomListItem = ({
+    title,
+    imageSource,
+    price,
+    description,
+    isRice,
+    isSwallow,
+    isSpecial,
+  }) => {
     return (
-      <List.Item
-        title={title}
-        right={() => (
-          <>
+      <TouchableOpacity
+        onPress={() => {
+          if (isRice && !isMealInCart(title)) {
+            addToCart({ item: title, price: price }, restaurant);
+            setSelectedTitle((prevSelectedTitles) => [
+              ...prevSelectedTitles,
+              title,
+            ]);
+            navigation.navigate("RiceOption", {
+              title,
+              price,
+              imageSource,
+              description,
+              restaurant,
+            });
+          } else if (isRice && isMealInCart(title)) {
+            navigation.navigate("RiceOption", {
+              title,
+              price,
+              imageSource,
+              description,
+              restaurant,
+            });
+          } else if (isSwallow && !isMealInCart(title)) {
+            addToCart({ item: title, price: price }, restaurant);
+            setSelectedTitle((prevSelectedTitles) => [
+              ...prevSelectedTitles,
+              title,
+            ]);
+            navigation.navigate("SwallowOption", {
+              title,
+              price,
+              imageSource,
+              description,
+              restaurant,
+            });
+          } else if (isSwallow && isMealInCart(title)) {
+            navigation.navigate("SwallowOption", {
+              title,
+              price,
+              imageSource,
+              description,
+              restaurant,
+            });
+          } else if (isSpecial) {
+            addToCart({ item: title, price: price }, restaurant);
+            setSelectedTitle((prevSelectedTitles) => [
+              ...prevSelectedTitles,
+              title,
+            ]);
+          }
+        }}
+      >
+        <List.Item
+          title={title}
+          description={
+            <Text variant="caption" style={{ color: colors.text.success }}>
+              {description}
+            </Text>
+          }
+          descriptionNumberOfLines={null}
+          right={() => (
             <Image source={imageSource} style={{ width: 100, height: 100 }} />
-            <OrderButton
-              icon={NairaIcon}
-              mode="contained"
-              onPress={() => {
-                addToCart({ item: title, price: price }, restaurant);
-              }}
-            >
-              Add to Cart
-            </OrderButton>
-          </>
-        )}
-      />
+          )}
+        />
+      </TouchableOpacity>
     );
   };
 
@@ -61,18 +118,21 @@ export const RestaurantDetailScreen = ({ route }) => {
             title="Jollof Rice"
             imageSource={foodPhotos.jollofRice}
             price={25000}
+            isRice={true}
           />
           <Divider />
           <CustomListItem
             title="Fried Rice"
             imageSource={foodPhotos.friedRice}
             price={25000}
+            isRice={true}
           />
           <Divider />
           <CustomListItem
             title="Steamed Rice"
             imageSource={foodPhotos.steamedRice}
             price={20000}
+            isRice={true}
           />
         </List.Accordion>
 
@@ -84,163 +144,33 @@ export const RestaurantDetailScreen = ({ route }) => {
           onPress={() => setswallowExpanded(!swallowExpanded)}
         >
           <CustomListItem
-            title="Amala"
-            imageSource={foodPhotos.amala}
-            price={20000}
+            title="Egusi Soup"
+            imageSource={foodPhotos.egusi}
+            price={80000}
+            isSwallow={true}
           />
           <Divider />
           <CustomListItem
-            title="Eba"
-            imageSource={foodPhotos.eba}
-            price={20000}
+            title="Efo RiRo"
+            imageSource={foodPhotos.efoRiro}
+            price={80000}
+            isSwallow={true}
           />
           <Divider />
           <CustomListItem
-            title="Fufu"
-            imageSource={foodPhotos.fufu}
-            price={20000}
+            title="Afang Soup"
+            imageSource={foodPhotos.afang}
+            price={80000}
+            isSwallow={true}
           />
           <Divider />
           <CustomListItem
-            title="Pounded Yam"
-            imageSource={foodPhotos.poundedYam}
-            price={20000}
+            title="Oha Soup"
+            imageSource={foodPhotos.oha}
+            price={80000}
+            isSwallow={true}
           />
           <Divider />
-        </List.Accordion>
-
-        <Divider />
-        <List.Accordion
-          title="Protein"
-          left={(props) => <List.Icon {...props} />}
-          expanded={proteinExpanded}
-          onPress={() => setproteinExpanded(!proteinExpanded)}
-        >
-          <CustomListItem
-            title="Chicken"
-            imageSource={foodPhotos.chicken}
-            price={70000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Mackrel Fish (Titus)"
-            imageSource={foodPhotos.mackrel}
-            price={50000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Tilapia Fish"
-            imageSource={foodPhotos.tilapia}
-            price={70000}
-          />
-          <Divider />
-          <CustomListItem title="Turkey" imageSource={foodPhotos.turkey} />
-          <Divider />
-          <CustomListItem
-            title="Assorted Meat"
-            imageSource={foodPhotos.assorted}
-            price={100000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Cow Skin (Pkomo)"
-            imageSource={foodPhotos.pkomo}
-            price={20000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Beef"
-            imageSource={foodPhotos.beef}
-            price={20000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Peppered Snail"
-            imageSource={foodPhotos.snail}
-            price={50000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Boiled Eggs"
-            imageSource={foodPhotos.boiledEggs}
-            price={15000}
-          />
-        </List.Accordion>
-
-        <Divider />
-        <List.Accordion
-          title="Sides"
-          left={(props) => <List.Icon {...props} />}
-          expanded={sideExpanded}
-          onPress={() => setSideExpanded(!sideExpanded)}
-        >
-          <CustomListItem
-            title="Plantain"
-            imageSource={foodPhotos.plantain}
-            price={30000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Moi-Moi"
-            imageSource={foodPhotos.moimoi}
-            price={30000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Salad (Coleslaw)"
-            imageSource={foodPhotos.salad}
-            price={30000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Spaghetti"
-            imageSource={foodPhotos.spaghetti}
-            price={20000}
-          />
-        </List.Accordion>
-
-        <Divider />
-        <List.Accordion
-          title="Drinks"
-          left={(props) => <List.Icon {...props} />}
-          expanded={drinksExpanded}
-          onPress={() => setDrinksExpanded(!drinksExpanded)}
-        >
-          <CustomListItem
-            title="Water"
-            imageSource={foodPhotos.water}
-            price={200}
-          />
-          <Divider />
-          <CustomListItem
-            title="Coke"
-            imageSource={foodPhotos.softDrinks}
-            price={25000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Fanta"
-            imageSource={foodPhotos.softDrinks}
-            price={25000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Sprite"
-            imageSource={foodPhotos.softDrinks}
-            price={25000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Orange Juice"
-            imageSource={foodPhotos.orangeJuice}
-            price={50000}
-          />
-          <Divider />
-          <CustomListItem
-            title="Ice Tea"
-            imageSource={foodPhotos.iceTea}
-            price={50000}
-          />
         </List.Accordion>
 
         <Divider />
@@ -250,45 +180,42 @@ export const RestaurantDetailScreen = ({ route }) => {
           expanded={specialExpanded}
           onPress={() => setSpecialExpanded(!specialExpanded)}
         >
-          <CustomListItem title="Jollof Rice Special" price={170000}>
-            <Text variant="hint">
-              includes:jollof rice, plantain, chicken, coleslaw, coke
-            </Text>
-          </CustomListItem>
+          <CustomListItem
+            title="Jollof Rice Special"
+            imageSource={foodPhotos.specialPlate}
+            price={170000}
+            description="jollof rice, plantain, chicken, coleslaw, coke"
+            isSpecial={true}
+          />
           <Divider />
-          <CustomListItem title="Steamed Rice Special" price={170000}>
-            <Text variant="hint">
-              includes:steamed rice, plantain, turkey, coleslaw, coke
-            </Text>
-          </CustomListItem>
+          <CustomListItem
+            title="Steamed Rice Special"
+            imageSource={foodPhotos.specialPlate}
+            price={170000}
+            description="steamed rice, plantain, turkey, coleslaw, coke"
+            isSpecial={true}
+          />
           <Divider />
-          <CustomListItem title="Pounded Yam Special" price={150000}>
-            <Text variant="hint">
-              includes:pounded Yam, melon soup(egusi), cow Skin(pkomo) , beef,
-              Mackrel Fish(Titus)
-            </Text>
-          </CustomListItem>
+          <CustomListItem
+            title="Pounded Yam Special"
+            imageSource={foodPhotos.specialPlate}
+            price={150000}
+            description="pounded-yam, melon-soup(egusi), cow-skin(pkomo), beef,
+              mackrel-fish(Titus)"
+            isSpecial={true}
+          />
           <Divider />
-          <CustomListItem title="Eba Special" price={150000}>
-            <Text variant="hint">
-              includes:eba, vegetable soup, assorted meat, Mackrel Fish(Titus),
-              cow Skin(Pkomo)
-            </Text>
-          </CustomListItem>
+          <CustomListItem
+            title="Eba Special"
+            imageSource={foodPhotos.specialPlate}
+            price={150000}
+            description="eba, vegetable-soup, assorted-meat, mackrel-fish(Titus),
+              cow-skin(Pkomo)"
+            isSpecial={true}
+          />
           <Divider />
         </List.Accordion>
       </ScrollView>
-      <Spacer position="bottom" size="large">
-        <OrderButton
-          icon={EuroIcon}
-          mode="contained"
-          onPress={() => {
-            navigation.navigate("Checkout");
-          }}
-        >
-          Go To Cart
-        </OrderButton>
-      </Spacer>
     </TabLink>
   );
 };

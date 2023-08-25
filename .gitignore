@@ -18,3 +18,5 @@ web-build/
 */node_modules/**/*
 */data/**/*
 .runtimeconfig.json
+firebase-debug.log
+ui-debug.log

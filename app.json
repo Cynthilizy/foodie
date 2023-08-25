@@ -15,13 +15,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cynthilizy.foodie"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/foodie.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.cynthilizy.foodie"
     },
     "web": {
       "favicon": "./assets/foodie.png"

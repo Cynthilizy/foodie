@@ -22,6 +22,11 @@ import eba from "./eba.jpg";
 import fufu from "./fufu.jpg";
 import pkomo from "./pkomo.jpg";
 import poundedYam from "./poundedYam.jpg";
+import specialPlate from "./specialPlate.jpg";
+import afang from "./afang-soup.jpeg";
+import efoRiro from "./efo-riro-soup.jpeg";
+import egusi from "./egusi-soup.jpg";
+import oha from "./oha-soup.jpg";
 
 export const foodPhotos = {
   assorted,
@@ -48,4 +53,9 @@ export const foodPhotos = {
   fufu,
   pkomo,
   poundedYam,
+  specialPlate,
+  afang,
+  efoRiro,
+  egusi,
+  oha,
 };

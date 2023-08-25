@@ -23,7 +23,7 @@ const CamereIcon = ({ navigation }) => {
   );
 };
 
-const SettingsBackground = styled.ImageBackground.attrs({
+export const SettingsBackground = styled.ImageBackground.attrs({
   source: require("../../assets/home_bg.jpg"),
 })`
   position: absolute;
@@ -81,6 +81,14 @@ export const SettingsScreen = ({ navigation }) => {
         </AvatarContainer>
         <List.Section>
           <SettingsItem
+            title="User Information"
+            left={(props) => (
+              <List.Icon {...props} color={colors.ui.secondary} icon="human" />
+            )}
+            onPress={() => null}
+          />
+          <Spacer />
+          <SettingsItem
             title="Favourites"
             description="View your favourites"
             left={(props) => (
@@ -90,7 +98,7 @@ export const SettingsScreen = ({ navigation }) => {
           />
           <Spacer />
           <SettingsItem
-            title="Payment"
+            title="Payments"
             left={(props) => (
               <List.Icon {...props} color={colors.ui.secondary} icon="cart" />
             )}
@@ -105,6 +113,14 @@ export const SettingsScreen = ({ navigation }) => {
                 color={colors.ui.secondary}
                 icon="history"
               />
+            )}
+            onPress={() => null}
+          />
+          <Spacer />
+          <SettingsItem
+            title="Contact Us"
+            left={(props) => (
+              <List.Icon {...props} color={colors.ui.secondary} icon="phone" />
             )}
             onPress={() => null}
           />

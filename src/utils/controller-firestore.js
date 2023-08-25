@@ -1,7 +1,7 @@
 import firestore from "@react-native-firebase/firestore";
 
 // Function to add a new purchase record to Firestore
-const addPurchaseToFirestore = async (
+export const addPurchaseToFirestore = async (
   customerName,
   customerAddress,
   customerPhone,

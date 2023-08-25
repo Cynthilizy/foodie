@@ -9,10 +9,16 @@ export const RestaurantList = styled(FlatList).attrs({
   },
 })``;
 
-export const OrderButton = styled(Button).attrs({
+export const AddToCartButton = styled(Button).attrs({
   color: colors.brand.primary,
 })`
-  padding: ${(props) => props.theme.space[2]};
-  width: 100%;
+  width: 10%;
+`;
+
+export const GoToCartButton = styled(Button).attrs({
+  color: colors.brand.primary,
+})`
+  padding: ${(props) => props.theme.space[0]};
+  width: 35%;
   align-self: center;
 `;
