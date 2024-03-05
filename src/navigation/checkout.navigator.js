@@ -4,9 +4,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 const CheckoutStack = createStackNavigator();
 
 import { CheckoutScreen } from "../screens/checkout.screen";
-import { CheckoutErrorScreen } from "../screens/checkout-error.screen";
+import { DeliveredScreen } from "../screens/delivered.screen.js";
 import { CheckoutSuccessScreen } from "../screens/checkout-success.screen";
 import { CartContext } from "../context/cart.context";
+import { PayScreen } from "../screens/payHere.screen";
 
 export const CheckoutNavigator = () => {
   const { selectedTitle } = useContext(CartContext);
@@ -22,9 +23,10 @@ export const CheckoutNavigator = () => {
         name="CheckoutSuccess"
         component={CheckoutSuccessScreen}
       />
+      <CheckoutStack.Screen name="PayHere" component={PayScreen} />
       <CheckoutStack.Screen
-        name="CheckoutError"
-        component={CheckoutErrorScreen}
+        name="DeliveredScreen"
+        component={DeliveredScreen}
       />
     </CheckoutStack.Navigator>
   );

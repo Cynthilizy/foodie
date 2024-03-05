@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 import { Text } from "../styles/text.styles";
-import { foodPhotos } from "../foodPhotos";
 import {
   CardCover,
   Info,
@@ -13,16 +12,20 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Spacer } from "../styles/spacer.styles";
 import { colors } from "../styles/colors.styles";
 import { View } from "react-native";
+import foodieImage from "../../assets/foodie.png";
 
 export const MealInfo = ({ meal, navigation }) => {
-  const { name = "title of meal", photo = foodPhotos.jollofRice } = meal;
+  const { name = "title of meal", photo = foodieImage } = meal;
   const { cart } = useContext(CartContext);
   const cartItemCount = cart.length;
 
   return (
     <RestaurantCard elevation={2}>
       <View>
-        <CardCover key={name} source={photo} />
+        <CardCover
+          key={name}
+          source={typeof photo === "string" ? { uri: photo } : photo}
+        />
       </View>
       <Info>
         <Section>
@@ -36,7 +39,6 @@ export const MealInfo = ({ meal, navigation }) => {
                 onPress={() => {
                   navigation.navigate("Checkout", {
                     screen: "CheckOut",
-                    //params: { title: name },
                   });
                 }}
               />

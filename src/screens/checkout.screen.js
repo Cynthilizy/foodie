@@ -1,27 +1,27 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Text } from "../styles/text.styles";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, TextInput, Modal } from "react-native";
 import { TabLink } from "../stylings/restaurant-info.styles";
-import { addPurchaseToFirestore } from "../utils/controller-firestore";
+import { Keyboard } from "react-native";
 import {
   CartIcon,
   CartIconContainer,
-  NameInput,
+  AddressInput,
   PayButton,
   ClearButton,
-  PaymentProcessing,
 } from "../stylings/checkout.styles";
 import { colors } from "../styles/colors.styles";
 import { NairaIcon } from "./restaurant-detail.screen";
-import { CreditCardInput } from "../features/credit-card.component";
 import { CartContext } from "../context/cart.context";
 import { Spacer } from "../styles/spacer.styles";
 import { ScrollView } from "react-native";
 import { List, Divider, Button, DataTable } from "react-native-paper";
 import { RestaurantInfo } from "../features/restaurant-info";
-import { payRequest } from "../service/checkout.service";
+import { placesRequest } from "../service/checkout.service";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-//import { Table, Row, Cell } from "react-native-table-component";
+import { AuthenticationContextCustomer } from "../context/authenticationCustomer.context";
+import { deliveryFeeRequest } from "../service/checkout.service";
+import { GoToCartButton } from "../stylings/restaurant-list.styles";
 
 const PlusMinusButtons = ({ onMinus, onPlus }) => (
   <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -46,34 +46,82 @@ export const CheckoutScreen = ({ navigation }) => {
     removeFromCart,
     selectedTitle,
     setSelectedTitle,
+    ridersNote,
+    setRidersNote,
   } = useContext(CartContext);
-  console.log("selected title in checkout", selectedTitle);
-  const [name, setName] = useState("");
-  const [card, setCard] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading, setIsLoading } = useContext(
+    AuthenticationContextCustomer
+  );
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [tempAddress, setTempAddress] = useState(null);
+  const [deliveryFee, setDeliveryFee] = useState(null);
+  const [isAddressSelected, setIsAddressSelected] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [note, setNote] = useState(null);
 
-  const onPay = () => {
-    setIsLoading(true);
-    if (!card || !card.id) {
-      setIsLoading(false);
-      navigation.navigate("CheckoutError", {
-        error: "Please fill in a valid credit card",
-      });
-      return;
+  const name = user.name;
+  const keyboardSetting = suggestions.length > 0 ? "always" : "never";
+
+  const fetchAddressSuggestions = async () => {
+    try {
+      const response = await placesRequest(tempAddress);
+      if (response && response.predictions) {
+        setSuggestions(response.predictions);
+      }
+    } catch (error) {
+      console.error("Error fetching address suggestions:", error);
     }
-    payRequest(card.id, sum, name)
-      .then((result) => {
-        setIsLoading(false);
-        clearCart();
-        navigation.navigate("CheckoutSuccess");
-      })
-      .catch((err) => {
-        setIsLoading(false);
-        navigation.navigate("CheckoutError", {
-          error: err,
-        });
-      });
   };
+
+  useEffect(() => {
+    if (tempAddress) {
+      fetchAddressSuggestions();
+    }
+  }, [tempAddress]);
+
+  useEffect(() => {
+    if (selectedAddress) {
+      Keyboard.dismiss();
+      fetchDeliveryFee();
+    }
+  }, [selectedAddress]);
+
+  useEffect(() => {
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setIsAddressSelected(true);
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  const fetchDeliveryFee = async () => {
+    try {
+      const fee = await deliveryFeeRequest(null, selectedAddress);
+      setDeliveryFee(fee);
+    } catch (error) {
+      console.error("Error fetching delivery fee:", error);
+    }
+  };
+
+  const renderSuggestion = (suggestion) => (
+    <TouchableOpacity
+      key={suggestion.place_id}
+      onPress={async () => {
+        setSelectedAddress(suggestion.description);
+        setTempAddress(null);
+        setIsAddressSelected(true);
+        setSuggestions([]);
+      }}
+    >
+      <Text>{suggestion.description}</Text>
+    </TouchableOpacity>
+  );
 
   if (!cart.length || !restaurant) {
     return (
@@ -103,13 +151,17 @@ export const CheckoutScreen = ({ navigation }) => {
     return (
       <DataTable.Row key={item}>
         <DataTable.Cell style={{ flex: 2 }}>{item}</DataTable.Cell>
-        <DataTable.Cell>{`₦${price / 100}`}</DataTable.Cell>
+        <DataTable.Cell>{`₦${price}`}</DataTable.Cell>
         <DataTable.Cell>{`x ${itemCountInCart(item)}`}</DataTable.Cell>
         <DataTable.Cell>
           {isMainMeal && (
             <Button
               icon={({ size, color }) => (
-                <Icon name="delete" size={size} color={colors.ui.error} />
+                <Icon
+                  name="delete-forever"
+                  size={size}
+                  color={colors.ui.error}
+                />
               )}
               onPress={() => {
                 removeFromCart(item);
@@ -124,7 +176,11 @@ export const CheckoutScreen = ({ navigation }) => {
           {isExtraMeal && (
             <Button
               icon={({ size, color }) => (
-                <Icon name="delete" size={size} color={colors.ui.error} />
+                <Icon
+                  name="delete-forever"
+                  size={size}
+                  color={colors.ui.error}
+                />
               )}
               onPress={() => {
                 removeFromCart(item);
@@ -153,74 +209,117 @@ export const CheckoutScreen = ({ navigation }) => {
 
   return (
     <TabLink>
-      <RestaurantInfo restaurant={restaurant} />
-      {isLoading && <PaymentProcessing />}
-      <ScrollView>
+      {isAddressSelected && <RestaurantInfo restaurant={restaurant} />}
+      <ScrollView keyboardShouldPersistTaps={keyboardSetting}>
         <Spacer position="left" size="medium">
           <Spacer position="top" size="large">
-            <Text style={{ fontWeight: "bold" }}>Your Order</Text>
+            {isAddressSelected && (
+              <Text style={{ fontWeight: "bold" }}>Your Order</Text>
+            )}
           </Spacer>
-          <DataTable>
-            <DataTable.Header>
-              <DataTable.Title style={{ flex: 2 }}>Item</DataTable.Title>
-              <DataTable.Title>Price</DataTable.Title>
-              <DataTable.Title></DataTable.Title>
-              <DataTable.Title></DataTable.Title>
-            </DataTable.Header>
+          {isAddressSelected && (
+            <DataTable>
+              <DataTable.Header>
+                <DataTable.Title style={{ flex: 2 }}>Item</DataTable.Title>
+                <DataTable.Title>Price</DataTable.Title>
+                <DataTable.Title></DataTable.Title>
+                <DataTable.Title></DataTable.Title>
+              </DataTable.Header>
 
-            {uniqueItems.map((item, index) => {
-              const price = cart.find(
-                (cartItem) => cartItem.item === item
-              ).price;
-              return getTitleWithCount(item, price);
-            })}
+              {uniqueItems.map((item, index) => {
+                const price = cart.find(
+                  (cartItem) => cartItem.item === item
+                ).price;
+                return getTitleWithCount(item, price);
+              })}
 
-            <DataTable.Row>
-              <DataTable.Cell style={{ flex: 1.5 }}>
-                <Text variant="label" style={{ fontWeight: "bold" }}>
-                  Total
-                </Text>
-              </DataTable.Cell>
-              <DataTable.Cell numeric>
-                <Text variant="label" style={{ fontWeight: "bold" }}>
-                  ₦{(sum / 100).toFixed(2)}
-                </Text>
-              </DataTable.Cell>
-              <DataTable.Cell></DataTable.Cell>
-              <DataTable.Cell></DataTable.Cell>
-            </DataTable.Row>
-          </DataTable>
+              <DataTable.Row>
+                <DataTable.Cell style={{ flex: 1.5 }}>
+                  <Text variant="label" style={{ fontWeight: "bold" }}>
+                    Total
+                  </Text>
+                </DataTable.Cell>
+                <DataTable.Cell numeric>
+                  <Text variant="label" style={{ fontWeight: "bold" }}>
+                    ₦{sum.toFixed(2)}
+                  </Text>
+                </DataTable.Cell>
+                <DataTable.Cell></DataTable.Cell>
+                <DataTable.Cell></DataTable.Cell>
+              </DataTable.Row>
+            </DataTable>
+          )}
         </Spacer>
         <Spacer position="top" size="large" />
         <Divider />
-        <NameInput
-          label="Name"
-          value={name}
-          onChangeText={(t) => {
-            setName(t);
-          }}
-        />
         <Spacer position="top" size="large">
           {name.length > 0 && (
-            <CreditCardInput
-              name={name}
-              onSuccess={setCard}
-              onError={() =>
-                navigation.navigate("CheckoutError", {
-                  error: "Something went wrong processing your credit card",
-                })
-              }
-            />
+            <>
+              <Spacer position="left" size="xl">
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text>Delivery Address</Text>
+                  {selectedAddress && (
+                    <Button
+                      onPress={() => {
+                        setSelectedAddress(null);
+                        setTempAddress(null);
+                        setIsAddressSelected(false);
+                      }}
+                      mode="contained"
+                      style={{
+                        backgroundColor: colors.brand.primary,
+                        borderRadius: 70,
+                        padding: 4,
+                        marginRight: 8,
+                      }}
+                    >
+                      Clear Address
+                    </Button>
+                  )}
+                </View>
+              </Spacer>
+              <AddressInput
+                value={selectedAddress}
+                onFocus={() => setIsAddressSelected(false)}
+                placeholder="enter delivery address"
+                onChangeText={(text) => {
+                  setTempAddress(text);
+                  setIsAddressSelected(false);
+                }}
+              />
+              {!isAddressSelected && suggestions.map(renderSuggestion)}
+            </>
           )}
+          <GoToCartButton
+            icon={"lead-pencil"}
+            disabled={!isAddressSelected || isLoading || deliveryFee === null}
+            style={{ width: 200 }}
+            onPress={() => {
+              setShowModal(true);
+            }}
+          >
+            Add Note for your driver
+          </GoToCartButton>
         </Spacer>
         <Spacer position="top" size="xxl" />
         <PayButton
-          disabled={isLoading}
+          disabled={!isAddressSelected || isLoading || deliveryFee === null}
           icon={NairaIcon}
           mode="contained"
-          onPress={onPay}
+          onPress={() =>
+            navigation.navigate("PayHere", {
+              address: selectedAddress,
+              restaurant,
+              deliveryFee,
+            })
+          }
         >
-          Pay
+          Continue To Payment
         </PayButton>
         <Spacer position="top" size="large">
           <ClearButton
@@ -233,6 +332,72 @@ export const CheckoutScreen = ({ navigation }) => {
           </ClearButton>
         </Spacer>
       </ScrollView>
+      {showModal && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showModal}
+          onRequestClose={() => {
+            setShowModal(false);
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 20,
+                borderRadius: 10,
+                width: "80%",
+              }}
+            >
+              <Text>Instruction for rider:</Text>
+              <TextInput
+                style={{
+                  borderColor: "gray",
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  marginTop: 10,
+                  padding: 5,
+                }}
+                onChangeText={(text) => setNote(text)}
+                value={note}
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-evenly",
+                  marginTop: 10,
+                }}
+              >
+                <GoToCartButton
+                  onPress={() => {
+                    setShowModal(false);
+                    setNote("");
+                  }}
+                >
+                  Cancel
+                </GoToCartButton>
+                <GoToCartButton
+                  onPress={() => {
+                    setRidersNote(note);
+                    setShowModal(false);
+                    setNote("");
+                  }}
+                >
+                  Save
+                </GoToCartButton>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </TabLink>
   );
 };

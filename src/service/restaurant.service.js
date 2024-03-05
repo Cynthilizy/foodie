@@ -1,19 +1,28 @@
+import { db } from "./firebase.service";
+import { collection, getDocs } from "firebase/firestore";
 import camelize from "camelize";
-import { Host } from "../utils/enviroment";
 
-export const RestaurantsRequest = (location = "6.465422,3.406448") => {
-  return fetch(`${Host}/restaurants?location=${location}`).then((res) => {
-    return res.json();
-  });
+export const RestaurantsRequest = async () => {
+  const restaurantsCollection = collection(db, "restaurants");
+  try {
+    const snapshot = await getDocs(restaurantsCollection);
+
+    const results = snapshot.docs.map((doc) => {
+      return { id: doc.id, ...doc.data() };
+    });
+    return results;
+  } catch (err) {
+    console.error("Error fetching restaurants:", err);
+    throw err;
+  }
 };
-
 export const RestaurantsTransform = ({ results = [] }) => {
   const mappedResults = results.map((restaurant) => {
     return {
       ...restaurant,
-      address: restaurant.vicinity,
+      address: restaurant.address,
     };
   });
-
-  return camelize(mappedResults);
+  const camelizedResults = camelize(mappedResults);
+  return camelizedResults;
 };

@@ -6,8 +6,7 @@ import {
 import { RestaurantsScreen } from "../screens/restaurant.screen";
 import { RestaurantDetailScreen } from "../screens/restaurant-detail.screen";
 import { Platform } from "react-native";
-import { RiceOptionsScreen } from "../screens/riceOption.screen";
-import { SwallowOptionsScreen } from "../screens/swallowOption.screen";
+import { SelectedMealScreen } from "../screens/selectedMeal.screen";
 
 const RestaurantStack = createStackNavigator();
 const isAndroid = Platform.OS === "android";
@@ -33,12 +32,8 @@ export const RestaurantsNavigator = () => {
         component={RestaurantDetailScreen}
       />
       <RestaurantStack.Screen
-        name="RiceOption"
-        component={RiceOptionsScreen} // Add RiceOptionsScreen as a screen
-      />
-      <RestaurantStack.Screen
-        name="SwallowOption"
-        component={SwallowOptionsScreen} // Add SwallowOptionsScreen as a screen
+        name="SelectedMeal"
+        component={SelectedMealScreen}
       />
     </RestaurantStack.Navigator>
   );

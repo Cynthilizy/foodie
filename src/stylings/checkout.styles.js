@@ -19,7 +19,7 @@ export const CartIcon = styled(Avatar.Icon).attrs({
   background-color: ${(props) => props.bg || props.theme.colors.brand.primary};
 `;
 
-export const NameInput = styled(TextInput)`
+export const AddressInput = styled(TextInput)`
   margin: ${(props) => props.theme.space[3]};
 `;
 
@@ -30,9 +30,7 @@ export const PayButton = styled(Button).attrs({
   align-self: center;
   padding: ${(props) => props.theme.space[2]};
 `;
-export const ClearButton = styled(Button).attrs({
-  color: colors.ui.error,
-})`
+export const ClearButton = styled(Button).attrs({})`
   width: 80%;
   align-self: center;
   padding: ${(props) => props.theme.space[2]};

@@ -23,7 +23,6 @@ const isRestaurantOpenNow = () => {
   const currentTime = new Date(); // Get the current time in client's timezone
   const nigerianTimezone = "Africa/Lagos";
 
-  // Convert the current time to Nigerian time zone
   const nigerianTime = utcToZonedTime(currentTime, nigerianTimezone);
 
   const startHour = 9; // 9am
@@ -37,19 +36,40 @@ export const RestaurantInfo = ({ restaurant = {} }) => {
   const {
     name = "test restaurant",
     icon = "https://www.vhv.rs/dpng/d/429-4294391_restaurant-menu-icon-png-icons-for-food-app.png",
-    photos = [
-      "https://ravintolamandala.fi/wp-content/uploads/2014/05/indian-feast-2-copy-2048x1588.jpg",
-    ],
+    photo = "https://ravintolamandala.fi/wp-content/uploads/2014/05/indian-feast-2-copy-2048x1588.jpg",
     rating = 4,
     address = "test address",
     placeId,
   } = restaurant;
   const ratingArray = Array.from(new Array(Math.floor(rating)));
+
+  const renderImage = () => {
+    if (typeof photo === "string") {
+      return (
+        <CardCover
+          key={name}
+          source={{ uri: photo }}
+          onError={(error) => console.log("Error loading photo:", error)}
+        />
+      );
+    } else if (photo && photo.uri) {
+      return (
+        <CardCover
+          key={name}
+          source={photo}
+          onError={() => console.log("Error loading photo")}
+        />
+      );
+    } else {
+      return null; // Render nothing if photo prop is not valid
+    }
+  };
+
   return (
     <RestaurantCard elevation={2}>
       <View>
         <Favourite restaurant={restaurant} />
-        <CardCover key={name} source={{ uri: photos[0] }} />
+        <View>{renderImage()}</View>
       </View>
       <Info>
         <Text variant="label">{name}</Text>

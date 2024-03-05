@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { FlatList, TouchableOpacity, View, ScrollView } from "react-native";
-import { Searchbar, Button } from "react-native-paper";
+import { Searchbar, Button, Divider } from "react-native-paper";
 import { styled } from "styled-components/native";
 import { TabLink } from "../stylings/restaurant-info.styles";
 import { RestaurantsContext } from "../context/restaurant.context";
@@ -18,9 +18,13 @@ const SearchContainer = styled.View`
 const StripedContainer = styled(View)`
   flex-direction: row;
   align-items: center;
-  background-color: ${(props) =>
-    props.index % 2 === 0 ? colors.bg.secondary : colors.ui.disabled};
-  padding: 8px 16px; /* Adjust padding for better spacing */
+  padding-vertical: 8px;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.4
+  ); /* Adjust padding for better spacing */
 `;
 
 const CenterText = styled(Text)`
@@ -117,19 +121,21 @@ export const SearchScreen = ({ navigation }) => {
           onSubmitEditing={handleSearch}
         />
       </SearchContainer>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {previousSearchTerms.length > 0 && searchQuery === "" ? (
-          // Show the "Previous searches" list only when the search bar is empty
-          <View>
-            <Spacer position="top" size="medium">
-              <CenterText variant="label">Previous searches</CenterText>
-            </Spacer>
-            {previousSearchTerms.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => setSearchQuery(item)}
-              >
-                <StripedContainer index={index}>
+      {previousSearchTerms.length > 0 && searchQuery === "" && (
+        <View>
+          <Spacer position="top" size="medium">
+            <CenterText variant="label">Previous searches</CenterText>
+          </Spacer>
+        </View>
+      )}
+
+      {/* Previous searches list */}
+      {previousSearchTerms.length > 0 && searchQuery === "" && (
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          {previousSearchTerms.map((item, index) => (
+            <TouchableOpacity key={index} onPress={() => setSearchQuery(item)}>
+              <View>
+                <StripedContainer>
                   <Icon
                     name="search"
                     size={20}
@@ -138,11 +144,12 @@ export const SearchScreen = ({ navigation }) => {
                   />
                   <Text style={{ color: colors.brand.primary }}>{item}</Text>
                 </StripedContainer>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-      </ScrollView>
+                {index < previousSearchTerms.length - 1 ? <Divider /> : null}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       {searchQuery === "" && previousSearchTerms.length === 0 ? (
         // No previous search and no current search query
         <CenterView>

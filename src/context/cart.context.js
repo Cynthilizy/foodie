@@ -1,17 +1,19 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AuthenticationContext } from "./authentication.context";
+import { AuthenticationContextCustomer } from "./authenticationCustomer.context";
 
 export const CartContext = createContext();
 
 export const CartContextProvider = ({ children }) => {
-  const { user } = useContext(AuthenticationContext);
+  const { user } = useContext(AuthenticationContextCustomer);
 
   const [cart, setCart] = useState([]);
   const [restaurant, setRestaurant] = useState(null);
   const [sum, setSum] = useState(0);
   const [itemQuantities, setItemQuantities] = useState({});
   const [selectedTitle, setSelectedTitle] = useState([]);
+  const [restaurantNote, setRestaurantNote] = useState("");
+  const [ridersNote, setRidersNote] = useState("");
 
   const saveCart = async (rst, crt, uid) => {
     try {
@@ -21,7 +23,6 @@ export const CartContextProvider = ({ children }) => {
         selectedTitle: selectedTitle,
       });
       await AsyncStorage.setItem(`@cart-${uid}`, jsonValue);
-      // console.log("Cart saved:", jsonValue);
     } catch (e) {
       console.log("error storing", e);
     }
@@ -36,7 +37,6 @@ export const CartContextProvider = ({ children }) => {
           cart: crt,
           selectedTitle: st,
         } = JSON.parse(value);
-        // console.log("Cart loaded:", rst, crt, st);
         setRestaurant(rst);
         setCart(crt);
         setSelectedTitle(st || []);
@@ -64,7 +64,7 @@ export const CartContextProvider = ({ children }) => {
       return;
     }
     const newSum = cart.reduce((acc, { price }) => {
-      return (acc += price);
+      return (acc += parseFloat(price)); // Use parseFloat or parseInt based on your needs
     }, 0);
     setSum(newSum);
   }, [cart]);
@@ -80,8 +80,12 @@ export const CartContextProvider = ({ children }) => {
     }
   };
 
+  const removeAllItemsByTitle = (itemTitle) => {
+    setCart((prevCart) => prevCart.filter((item) => item.item !== itemTitle));
+  };
+
   const add = (item, rst) => {
-    const newItem = { ...item, id: cart.length + 1 }; // Assign the length of the current cart as the id
+    const newItem = { ...item, id: cart.length + 1 };
     if (!restaurant || restaurant.placeId !== rst.placeId) {
       setRestaurant(rst);
       setCart([newItem]);
@@ -114,6 +118,11 @@ export const CartContextProvider = ({ children }) => {
         sum,
         selectedTitle,
         setSelectedTitle,
+        removeAllItemsByTitle,
+        restaurantNote,
+        setRestaurantNote,
+        ridersNote,
+        setRidersNote,
       }}
     >
       {children}

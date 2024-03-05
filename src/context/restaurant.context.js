@@ -1,35 +1,38 @@
-import React, { useState, useMemo, createContext, useEffect } from "react";
-import {
-  RestaurantsRequest,
-  RestaurantsTransform,
-} from "../service/restaurant.service";
+import React, { useState, createContext, useEffect } from "react";
+import { RestaurantsTransform } from "../service/restaurant.service";
+import { collection, query, onSnapshot } from "firebase/firestore";
+import { db } from "../service/firebase.service";
 
 export const RestaurantsContext = createContext();
 
 export const RestaurantsContextProvider = ({ children }) => {
   const [restaurants, setRestaurants] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const retrieveRestaurants = () => {
+  useEffect(() => {
     setIsLoading(true);
-    setRestaurants([]);
 
-    RestaurantsRequest()
-      .then(RestaurantsTransform)
-      .then((results) => {
+    const q = query(collection(db, "restaurants"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const newRestaurants = snapshot.docs.map((doc) => {
+          return {
+            id: doc.id,
+            ...doc.data(),
+          };
+        });
+        setRestaurants(RestaurantsTransform({ results: newRestaurants }));
         setIsLoading(false);
-        setRestaurants(results);
-        console.log(restaurants);
-      })
-      .catch((err) => {
+      },
+      (err) => {
         setIsLoading(false);
         setError(err);
-        console.log(err);
-      });
-  };
-  useEffect(() => {
-    retrieveRestaurants();
+        console.log("An error occurred", err);
+      }
+    );
+    return () => unsubscribe();
   }, []);
 
   return (

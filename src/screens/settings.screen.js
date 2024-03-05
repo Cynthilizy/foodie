@@ -1,27 +1,17 @@
-import React, { useContext, useState, useCallback } from "react";
+import React, { useContext, useEffect } from "react";
 import { TabLink } from "../stylings/restaurant-info.styles";
-import { AuthenticationContext } from "../context/authentication.context";
+import { AuthenticationContextCustomer } from "../context/authenticationCustomer.context";
 import { List, Avatar } from "react-native-paper";
 import styled from "styled-components/native";
 import { Text } from "../styles/text.styles";
 import { Spacer } from "../styles/spacer.styles";
-import { TouchableOpacity } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
 import { colors } from "../styles/colors.styles";
-import { Ionicons } from "@expo/vector-icons";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const TransparentSafeArea = styled(TabLink)`
   background-color: transparent;
 `;
-
-const CamereIcon = ({ navigation }) => {
-  return (
-    <TouchableOpacity onPress={() => navigation.navigate("Camera")}>
-      <Ionicons name="camera" color="white" size={20} />
-    </TouchableOpacity>
-  );
-};
 
 export const SettingsBackground = styled.ImageBackground.attrs({
   source: require("../../assets/home_bg.jpg"),
@@ -41,42 +31,46 @@ const AvatarContainer = styled.View`
 `;
 
 export const SettingsScreen = ({ navigation }) => {
-  const { onLogout, user } = useContext(AuthenticationContext);
-  const [photo, setPhoto] = useState(null);
-
-  const getProfilePicture = async (currentUser) => {
-    const photoUri = await AsyncStorage.getItem(`${currentUser.uid}-photo`);
-    setPhoto(photoUri);
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      getProfilePicture(user);
-    }, [user])
+  const { onLogout, user, profilePictureURL } = useContext(
+    AuthenticationContextCustomer
   );
 
   return (
     <SettingsBackground>
       <TransparentSafeArea>
         <AvatarContainer>
-          <TouchableOpacity onPress={() => navigation.navigate("Camera")}>
-            {!photo && (
+          {!profilePictureURL && (
+            <View>
               <Avatar.Icon
                 size={180}
                 icon="human"
                 backgroundColor={colors.brand.primary}
               />
-            )}
-            {photo && (
+              <TouchableOpacity
+                style={styles.cameraIconContainer}
+                onPress={() => navigation.navigate("Camera")}
+              >
+                <Icon name="camera-outline" size={35} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {profilePictureURL && (
+            <View>
               <Avatar.Image
                 size={180}
-                source={{ uri: photo }}
+                source={{ uri: profilePictureURL }}
                 backgroundColor="#2182BD"
               />
-            )}
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cameraIconContainer}
+                onPress={() => navigation.navigate("Camera")}
+              >
+                <Icon name="camera-outline" size={35} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
           <Spacer position="top" size="large">
-            <Text variant="label">{user.email}</Text>
+            <Text variant="label">{user ? user.name : ""}</Text>
           </Spacer>
         </AvatarContainer>
         <List.Section>
@@ -85,12 +79,12 @@ export const SettingsScreen = ({ navigation }) => {
             left={(props) => (
               <List.Icon {...props} color={colors.ui.secondary} icon="human" />
             )}
-            onPress={() => null}
+            onPress={() => navigation.navigate("UserInfo")}
           />
           <Spacer />
           <SettingsItem
             title="Favourites"
-            description="View your favourites"
+            description="View your favourite restaurants"
             left={(props) => (
               <List.Icon {...props} color={colors.ui.error} icon="heart" />
             )}
@@ -98,7 +92,7 @@ export const SettingsScreen = ({ navigation }) => {
           />
           <Spacer />
           <SettingsItem
-            title="Payments"
+            title="Payment Cards"
             left={(props) => (
               <List.Icon {...props} color={colors.ui.secondary} icon="cart" />
             )}
@@ -130,10 +124,34 @@ export const SettingsScreen = ({ navigation }) => {
             left={(props) => (
               <List.Icon {...props} color={colors.ui.secondary} icon="door" />
             )}
-            onPress={onLogout}
+            onPress={() => onLogout(navigation)}
           />
         </List.Section>
       </TransparentSafeArea>
     </SettingsBackground>
   );
 };
+
+const styles = StyleSheet.create({
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    position: "relative",
+  },
+  profileImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 75,
+  },
+  cameraIconContainer: {
+    position: "absolute",
+    right: 110, // adjust these as needed
+    bottom: 17, // adjust these as needed
+    backgroundColor: "transparent", // semi-transparent
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

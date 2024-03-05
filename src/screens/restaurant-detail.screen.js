@@ -1,221 +1,174 @@
-import React, { useState, useContext } from "react";
-import { ScrollView, View, Image, TouchableOpacity } from "react-native";
-import { List, Divider } from "react-native-paper";
-import { TabLink } from "../stylings/restaurant-info.styles";
-import { Text } from "../styles/text.styles";
-import { RestaurantInfo } from "../features/restaurant-info";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { foodPhotos } from "../foodPhotos";
+import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from "../context/cart.context";
+import {
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from "react-native";
+import { List, Text as PaperText, Divider } from "react-native-paper";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { colors } from "../styles/colors.styles";
+import { AuthenticationContextAdmin } from "../context/authenticationAdmin.context";
+import { RestaurantInfo } from "../features/restaurant-info";
+import { TabLink } from "../stylings/restaurant-info.styles";
+import foodieImage from "../../assets/foodie.png";
 
 export const NairaIcon = () => {
   return <Icon name="currency-ngn" color="white" size={18} />;
 };
 
 export const RestaurantDetailScreen = ({ navigation, route }) => {
-  const [riceExpanded, setriceExpanded] = useState(false);
-  const [swallowExpanded, setswallowExpanded] = useState(false);
-  const [specialExpanded, setSpecialExpanded] = useState(false);
-
   const { restaurant } = route.params;
+  const { fetchMenuByRestaurantId } = useContext(AuthenticationContextAdmin);
+  const [menus, setMenus] = useState([]);
+  const [categoryStates, setCategoryStates] = useState({});
+  const [menuType, setMenuType] = useState([]);
+
   const { addToCart, cart, setSelectedTitle } = useContext(CartContext);
 
   const isMealInCart = (title) => {
     return cart.some((item) => item.item === title);
   };
 
-  const CustomListItem = ({
-    title,
-    imageSource,
-    price,
-    description,
-    isRice,
-    isSwallow,
-    isSpecial,
-  }) => {
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          if (isRice && !isMealInCart(title)) {
-            addToCart({ item: title, price: price }, restaurant);
-            setSelectedTitle((prevSelectedTitles) => [
-              ...prevSelectedTitles,
-              title,
-            ]);
-            navigation.navigate("RiceOption", {
-              title,
-              price,
-              imageSource,
-              description,
-              restaurant,
-            });
-          } else if (isRice && isMealInCart(title)) {
-            navigation.navigate("RiceOption", {
-              title,
-              price,
-              imageSource,
-              description,
-              restaurant,
-            });
-          } else if (isSwallow && !isMealInCart(title)) {
-            addToCart({ item: title, price: price }, restaurant);
-            setSelectedTitle((prevSelectedTitles) => [
-              ...prevSelectedTitles,
-              title,
-            ]);
-            navigation.navigate("SwallowOption", {
-              title,
-              price,
-              imageSource,
-              description,
-              restaurant,
-            });
-          } else if (isSwallow && isMealInCart(title)) {
-            navigation.navigate("SwallowOption", {
-              title,
-              price,
-              imageSource,
-              description,
-              restaurant,
-            });
-          } else if (isSpecial) {
-            addToCart({ item: title, price: price }, restaurant);
-            setSelectedTitle((prevSelectedTitles) => [
-              ...prevSelectedTitles,
-              title,
-            ]);
+  const fetchMenus = async () => {
+    const restaurantData = await fetchMenuByRestaurantId(restaurant.id);
+    if (restaurantData) {
+      const mainMenuData = restaurantData.mainMenu;
+      const menuArray = [];
+      const categoryKeys = Object.keys(mainMenuData).sort();
+      for (const categoryKey of categoryKeys) {
+        const category = mainMenuData[categoryKey];
+        const categoryMenu = [];
+        const itemKeys = Object.keys(category).sort();
+        for (const itemKey of itemKeys) {
+          if (itemKey === "mealType") {
+            setMenuType(category[itemKey]);
+            continue;
           }
-        }}
-      >
-        <List.Item
-          title={title}
-          description={
-            <Text variant="caption" style={{ color: colors.text.success }}>
-              {description}
-            </Text>
-          }
-          descriptionNumberOfLines={null}
-          right={() => (
-            <Image source={imageSource} style={{ width: 100, height: 100 }} />
-          )}
-        />
-      </TouchableOpacity>
-    );
+          const menuItem = category[itemKey];
+          categoryMenu.push({
+            title: itemKey,
+            imageSource: menuItem[0],
+            price: menuItem[1],
+          });
+        }
+        menuArray.push({
+          category: categoryKey,
+          items: categoryMenu,
+          expanded: false,
+          menuType: category.mealType,
+        });
+      }
+      setMenus(menuArray);
+    }
   };
+
+  useEffect(() => {
+    fetchMenus();
+  }, [restaurant.id, fetchMenuByRestaurantId, restaurant]);
 
   return (
     <TabLink>
       <RestaurantInfo restaurant={restaurant} />
-      <ScrollView>
-        <List.Accordion
-          title="Rice Meals"
-          left={(props) => <List.Icon {...props} />}
-          expanded={riceExpanded}
-          onPress={() => setriceExpanded(!riceExpanded)}
-        >
-          <CustomListItem
-            title="Jollof Rice"
-            imageSource={foodPhotos.jollofRice}
-            price={25000}
-            isRice={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Fried Rice"
-            imageSource={foodPhotos.friedRice}
-            price={25000}
-            isRice={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Steamed Rice"
-            imageSource={foodPhotos.steamedRice}
-            price={20000}
-            isRice={true}
-          />
-        </List.Accordion>
+      <ScrollView style={styles.container}>
+        <List.Section>
+          {menus.map((menu, categoryIndex) => (
+            <>
+              <List.Accordion
+                key={categoryIndex}
+                title={menu.category}
+                left={(props) => <List.Icon {...props} icon="pot-steam" />}
+              >
+                {menu.items.length > 0
+                  ? menu.items.map((item, itemIndex) => (
+                      <>
+                        <TouchableOpacity
+                          key={item.name}
+                          style={styles.menuItem}
+                          onPress={() => {
+                            console.log(
+                              "menu type",
+                              menus[categoryIndex].menuType
+                            );
+                            if (!isMealInCart(item.title)) {
+                              addToCart(
+                                { item: item.title, price: item.price },
+                                restaurant
+                              );
+                              setSelectedTitle((prevSelectedTitles) => [
+                                ...prevSelectedTitles,
+                                item.title,
+                              ]);
+                              navigation.navigate("SelectedMeal", {
+                                name: item.title,
+                                imageSource: item.imageSource,
+                                restaurant: restaurant,
+                                price: item.price,
+                                menuType: menus[categoryIndex].menuType,
+                              });
+                            } else {
+                              navigation.navigate("SelectedMeal", {
+                                name: item.title,
+                                imageSource: item.imageSource,
+                                restaurant: restaurant,
+                                price: item.price,
+                                menuType: menus[categoryIndex].menuType,
+                              });
+                            }
+                          }}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <PaperText variant="headlineSmall">
+                              {item.title}
+                            </PaperText>
+                            <PaperText
+                              variant="titleMedium"
+                              style={{ color: colors.text.success }}
+                            >
+                              Price: {`₦${item.price}`}
+                            </PaperText>
+                          </View>
 
-        <Divider />
-        <List.Accordion
-          title="Swallow"
-          left={(props) => <List.Icon {...props} />}
-          expanded={swallowExpanded}
-          onPress={() => setswallowExpanded(!swallowExpanded)}
-        >
-          <CustomListItem
-            title="Egusi Soup"
-            imageSource={foodPhotos.egusi}
-            price={80000}
-            isSwallow={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Efo RiRo"
-            imageSource={foodPhotos.efoRiro}
-            price={80000}
-            isSwallow={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Afang Soup"
-            imageSource={foodPhotos.afang}
-            price={80000}
-            isSwallow={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Oha Soup"
-            imageSource={foodPhotos.oha}
-            price={80000}
-            isSwallow={true}
-          />
-          <Divider />
-        </List.Accordion>
-
-        <Divider />
-        <List.Accordion
-          title="Special Plates"
-          left={(props) => <List.Icon {...props} />}
-          expanded={specialExpanded}
-          onPress={() => setSpecialExpanded(!specialExpanded)}
-        >
-          <CustomListItem
-            title="Jollof Rice Special"
-            imageSource={foodPhotos.specialPlate}
-            price={170000}
-            description="jollof rice, plantain, chicken, coleslaw, coke"
-            isSpecial={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Steamed Rice Special"
-            imageSource={foodPhotos.specialPlate}
-            price={170000}
-            description="steamed rice, plantain, turkey, coleslaw, coke"
-            isSpecial={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Pounded Yam Special"
-            imageSource={foodPhotos.specialPlate}
-            price={150000}
-            description="pounded-yam, melon-soup(egusi), cow-skin(pkomo), beef,
-              mackrel-fish(Titus)"
-            isSpecial={true}
-          />
-          <Divider />
-          <CustomListItem
-            title="Eba Special"
-            imageSource={foodPhotos.specialPlate}
-            price={150000}
-            description="eba, vegetable-soup, assorted-meat, mackrel-fish(Titus),
-              cow-skin(Pkomo)"
-            isSpecial={true}
-          />
-          <Divider />
-        </List.Accordion>
+                          <Image
+                            source={
+                              typeof item.imageSource === "string"
+                                ? { uri: item.imageSource }
+                                : item.imageSource
+                            }
+                            style={styles.itemImage}
+                          />
+                        </TouchableOpacity>
+                        <Divider />
+                      </>
+                    ))
+                  : null}
+              </List.Accordion>
+              <Divider />
+            </>
+          ))}
+        </List.Section>
       </ScrollView>
     </TabLink>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 10,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    backgroundColor: "#f1f1f1",
+    marginBottom: 5,
+  },
+  itemImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+});

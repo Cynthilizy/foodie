@@ -1,43 +1,43 @@
 {
-  "expo": {
-    "name": "foodie",
-    "slug": "foodie",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/foodie.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/foodie.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.cynthilizy.foodie"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/foodie.png",
+    "expo": {
+      "name": "foodie",
+      "slug": "foodie",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/foodie.png",
+      "userInterfaceStyle": "light",
+      "splash": {
+        "image": "./assets/foodie.png",
+        "resizeMode": "contain",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.cynthilizy.foodie"
-    },
-    "web": {
-      "favicon": "./assets/foodie.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "7be40ef3-9b56-4def-b650-41ad7c64bd99"
+      "assetBundlePatterns": [
+        "**/*"
+      ],
+      "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "com.cynthilizy.foodie"
+      },
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/foodie.png",
+          "backgroundColor": "#ffffff"
+        },
+        "package": "com.cynthilizy.foodie"
+      },
+      "web": {
+        "favicon": "./assets/foodie.png"
+      },
+      "extra": {
+        "eas": {
+          "projectId": "7be40ef3-9b56-4def-b650-41ad7c64bd99"
+        }
+      },
+      "runtimeVersion": {
+        "policy": "sdkVersion"
+      },
+      "updates": {
+        "url": "https://u.expo.dev/7be40ef3-9b56-4def-b650-41ad7c64bd99"
       }
-    },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/7be40ef3-9b56-4def-b650-41ad7c64bd99"
     }
   }
-}
