@@ -13,14 +13,17 @@ export const payRequest = (token, amount, name) => {
       amount,
     }),
     method: "POST",
-  }).then((res) => {
-    if (!res.ok) {
-      return Promise.reject(
-        "something wenthttps://moodle.savonia.fi/course/view.php?id=1152 wrong processing your payment"
-      );
-    }
-    return res.json();
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return Promise.reject("something went wrong processing your payment");
+      }
+      return res.json();
+    })
+    .catch((error) => {
+      console.error("Error during payRequest:", error);
+      return Promise.reject("An error occurred during payment processing");
+    });
 };
 
 export const placesRequest = (address) => {
